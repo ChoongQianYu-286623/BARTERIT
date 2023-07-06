@@ -3,10 +3,11 @@ import 'package:barterlt/models/item.dart';
 import 'package:barterlt/models/user.dart';
 import 'package:barterlt/myconfig.dart';
 import 'package:barterlt/screens/additemscreen.dart';
+import 'package:barterlt/screens/edititemscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:google_fonts/google_fonts.dart';
 
 class SellerTabScreen extends StatefulWidget {
   final User user;
@@ -20,13 +21,20 @@ class _SellerTabScreenState extends State<SellerTabScreen> {
   late double screenHeight, screenWidth;
   late int axiscount = 2;
   late List<Widget> tabchildren;
-   List<Item> itemList = <Item>[];
+  String maintitle = "Seller";
+  List<Item> itemList = <Item>[];
   
    @override
   void initState() {
     super.initState();
     loadsellerItems();
     print("Seller");
+  }
+
+   @override
+  void dispose() {
+    super.dispose();
+    print("dispose");
   }
 
   @override
@@ -39,6 +47,10 @@ class _SellerTabScreenState extends State<SellerTabScreen> {
       axiscount = 2;
     }
     return Scaffold(
+      appBar: AppBar(
+        title: Text(maintitle,
+        style: GoogleFonts.manrope(fontWeight: FontWeight.bold)),
+      ),
       body: RefreshIndicator(
          onRefresh: ()async{
           loadsellerItems();
@@ -50,42 +62,51 @@ class _SellerTabScreenState extends State<SellerTabScreen> {
           : Column(children: [
               Expanded(
                   child: GridView.count(
+                    childAspectRatio: (1/1.2),
                       crossAxisCount: axiscount,
                       children: List.generate(
                         itemList.length,
                         (index) {
                           return Card(
+                            elevation: 4,
                             child: InkWell(
                               onLongPress: () {
-                                //onDeleteDialog(index);
+                                onDeleteDialog(index);
                               },
-                              onTap: ()  {
-              
-                                //loadsellerItems();
+                              onTap: () async {
+                                Item singleitem = Item.fromJson(itemList[index].toJson());
+                                await Navigator.push(context, 
+                                MaterialPageRoute(
+                                  builder: (content) => EditItemScreen(
+                                  user: widget.user, useritem: singleitem)));
                               },
                               child: Column(children: [
                                 CachedNetworkImage(
                                   width: screenWidth,
+                                  height: screenHeight*0.2,
                                   fit: BoxFit.cover,
                                   imageUrl:
-                                      "${MyConfig().SERVER}/barterlt/assets/item_list/${itemList[index].itemId}.png",
+                                      "${MyConfig().SERVER}/barterlt/assets/item_list/${itemList[index].itemId}a.png",
                                   placeholder: (context, url) =>
                                       const LinearProgressIndicator(),
                                   errorWidget: (context, url, error) =>
                                       const Icon(Icons.error),
                                 ),
+                                const SizedBox(height: 10),
                                 Text(
                                   itemList[index].itemName.toString(),
-                                  style: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
+                                  style: GoogleFonts.manrope(fontSize: 17,fontWeight: FontWeight.bold),
                                 ),
-                                // Text(
-                                //   "RM ${double.parse(itemList[index].itemPrice.toString()).toStringAsFixed(2)}",
-                                //   style: const TextStyle(fontSize: 14),
-                                // ),
-                                // Text(
-                                //   "${itemList[index].itemQty} available",
-                                //   style: const TextStyle(fontSize: 14),
-                                //),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "RM ${double.parse(itemList[index].itemPrice.toString()).toStringAsFixed(2)}",
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "${itemList[index].itemQty} available",
+                                  style: const TextStyle(fontSize: 10),
+                                ),
                               ]),
                             ),
                           );
@@ -121,8 +142,6 @@ class _SellerTabScreenState extends State<SellerTabScreen> {
         body: {
           "userid": widget.user.id})
           .then((response) {
-            //print(response.body);
-      //log(response.body);
       itemList.clear();
       if (response.statusCode == 200) {
         var jsondata = jsonDecode(response.body);
@@ -131,7 +150,6 @@ class _SellerTabScreenState extends State<SellerTabScreen> {
           extractdata['item'].forEach((v) {
             itemList.add(Item.fromJson(v));
           });
-          print(itemList[0].itemName);
         }
         setState(() {});
       }
@@ -140,5 +158,10 @@ class _SellerTabScreenState extends State<SellerTabScreen> {
   }
   
   void onDeleteDialog(int index) {
-
+     
   }
+  
+  void deleteItem(int index) {
+    
+  }
+
