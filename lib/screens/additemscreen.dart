@@ -18,8 +18,10 @@ class AddItemScreen extends StatefulWidget {
 }
 
 class _AddItemScreenState extends State<AddItemScreen> {
-  List<File> selectedImages = [];
-  List<XFile>? images = [];
+  File? _image;
+  List<File> _imageList = [];
+  int _index = 0;
+  late int axiscount =3;
   var pathAsset = "assets/images/camera.jpeg";
   final _formKey = GlobalKey<FormState>();
   late double screenHeight, screenWidth, cardwitdh;
@@ -40,6 +42,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     "Electrical",    
     "Gaming",
     "Grocery",
+    "Home & Living",
     "Shoe",    
     "Smart gadgets",
     "Sports",
@@ -78,36 +81,23 @@ class _AddItemScreenState extends State<AddItemScreen> {
             flex: 4,
             // height: screenHeight / 2.5,
             // width: screenWidth,
-            child: GestureDetector(
-              onTap: () {
-                _showSelectionDialog(context);
-              },
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-                child: Card(
-                  child: SizedBox(
-                    width: screenWidth,
-                    child: selectedImages.isEmpty
-                    ? Image.asset(pathAsset,
-                    fit: BoxFit.contain,)
-                    : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: selectedImages.length,
-                      itemBuilder: (context, index){
-                        return Image.file(selectedImages[index]);
-                      },
-                    )
-                    // decoration: BoxDecoration(
-                    //   image: DecorationImage(
-                    //     image: _image == null
-                    //     ? AssetImage(pathAsset)
-                    //     : FileImage(_image!) as ImageProvider,
-                    //     fit: BoxFit.contain),
-                    // ),
-                  ),
-                ),
-              ),
-            )),
+            child: PageView.builder(
+              itemCount: 3,
+              controller: PageController(viewportFraction: 0.7),
+              onPageChanged: (int index) => setState(() {
+                _index = index;
+              }),
+              itemBuilder: (BuildContext context, int index){
+                if(index == 0){
+                  return image1();
+                } else if (index == 1){
+                  return image2();
+                } else if(index == 2){
+                  return image3();
+                }
+              }
+              )
+            ),
             Expanded(
               flex: 6,
               child: Padding(
@@ -328,7 +318,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  Future<void>_showSelectionDialog(BuildContext context){
+  Future<void>_showSelectionDialog() async{
     return showDialog(
       context: context, 
       builder: (BuildContext context){
@@ -363,91 +353,79 @@ class _AddItemScreenState extends State<AddItemScreen> {
   Future<void> _selectFromCamera() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
-      source: ImageSource.camera, //gallery
+      source: ImageSource.camera,
       maxHeight: 1200,
       maxWidth: 800,
     );
 
-    List<XFile> xFilePick = pickedFile as List<XFile>; //
-    setState(() {
-    if(xFilePick.isNotEmpty){
-      for(var i = 0; i < xFilePick.length; i++){
-        selectedImages.add(File(xFilePick[i].path));
-      //cropImage();
-      }
-    }else {
-    print('No image selected.');
-  }
-  });
-    Navigator.of(context).pop();
+    if (pickedFile != null) {
+      _image = File(pickedFile.path);
+      cropImage();
+    } else {
+      print('No image selected.');
+    }
   }
 
   Future<void> _selectFromGallery() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickMultiImage(
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
       maxHeight: 1200,
       maxWidth: 800,
     );
-    List<XFile> xfilePick = pickedFile;
-    setState(() {
-      if (xfilePick.isNotEmpty) {
-        for (var i = 0; i < xfilePick.length; i++) {
-          selectedImages.add(File(xfilePick[i].path));
-        }
-      } else {
-        print('No image selected.');
-      }
-    });
 
-    List<File>? croppedImages = await cropImages(selectedImages);
-    if (croppedImages != null) {
-      setState(() {
-        selectedImages = croppedImages;
-      });
+    if (pickedFile != null) {
+      _image = File(pickedFile.path);
+      cropImage();
+    } else {
+      print('No image selected.');
     }
   }
 
-  Future<List<File>?> cropImages(List<File> images) async {
-    List<File> croppedImages = [];
+  Future<void> cropImage() async {
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: _image!.path,
+      aspectRatioPresets: [
+        // CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        // CropAspectRatioPreset.original,
+        //CropAspectRatioPreset.ratio4x3,
+        // CropAspectRatioPreset.ratio16x9
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Cropper',
+            toolbarColor: Colors.amber,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.ratio3x2,
+            lockAspectRatio: true),
+        IOSUiSettings(
+          title: 'Cropper',
+        ),
+      ],
+    );
+    if (croppedFile != null) {
+      File imageFile = File(croppedFile.path);
+      _image = imageFile;
+      _imageList.add(_image!);
+      setState(() {
+        
+      });
+      int? sizeInBytes = _image?.lengthSync();
+      double sizeInMb = sizeInBytes! / (1024 * 1024);
+      print(sizeInMb);
 
-    for (var image in images) {
-      CroppedFile? croppedFile = await ImageCropper().cropImage(
-        sourcePath: image.path,
-        aspectRatioPresets: [
-          CropAspectRatioPreset.square,
-          CropAspectRatioPreset.ratio3x2,
-          CropAspectRatioPreset.original,
-          CropAspectRatioPreset.ratio4x3,
-          CropAspectRatioPreset.ratio16x9,
-        ],
-        uiSettings: [
-          AndroidUiSettings(
-              toolbarTitle: 'Cropper',
-              toolbarColor: Colors.deepOrange,
-              toolbarWidgetColor: Colors.white,
-              initAspectRatio: CropAspectRatioPreset.ratio3x2,
-              lockAspectRatio: true),
-          IOSUiSettings(
-            title: 'Cropper',
-          ),
-        ],
-      );
-
-      if (croppedFile != null) {
-        croppedImages.add(File(croppedFile.path));
-      }
+      setState(() {});
     }
-
-    return croppedImages.isNotEmpty ? croppedImages:null;
-}
+  }
 
   void insertDialog() {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Please fill in all the input")));
+          .showSnackBar(const SnackBar(content: Text("Check your input")));
       return;
     }
-    if (selectedImages.isEmpty) {
+    if (_imageList.isEmpty) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Please take picture")));
       return;
@@ -487,7 +465,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
         );
       },
     );
-    }
+  }
+
 
     void insertItem() async {
       String itemname = _itemnameEditingController.text;
@@ -496,13 +475,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
       String itemqty = _itemqtyEditingController.text;
       String state = _prstateEditingController.text;
       String locality = _prlocalEditingController.text;
-     List<String> base64Images = [];
-      for (var image in selectedImages) {
-      List<int> imageBytes = await image.readAsBytes();
-      print(base64Images.length);
-      String base64Image = base64Encode(imageBytes);
-      base64Images.add(base64Image);
-    }
+      String base64Image1 = base64Encode(_imageList[0].readAsBytesSync());
+      String base64Image2 = base64Encode(_imageList[1].readAsBytesSync());
+      String base64Image3 = base64Encode(_imageList[2].readAsBytesSync());
+
 
       http.post(Uri.parse("${MyConfig().SERVER}/barterlt/php/insert_item.php"),
        body: {
@@ -516,7 +492,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
         "longitude": prlong,
         "state": state,
         "locality": locality,
-        "images": jsonEncode(base64Images),
+        "image1": base64Image1,
+        "image2": base64Image2,
+        "image3": base64Image3,
        }).then((response){
         print(response.body);
         if (response.statusCode == 200){
@@ -536,6 +514,66 @@ class _AddItemScreenState extends State<AddItemScreen> {
         }
        });
     }
+
+  Widget image1(){
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      child: GestureDetector(
+        onTap: _showSelectionDialog,
+        child: Container(
+          width: screenWidth,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: _imageList.isNotEmpty
+                  ? FileImage(_imageList[0]) as ImageProvider
+                  : AssetImage(pathAsset),
+                fit: BoxFit.contain,
+                ),
+              )
+        ),
+      ),
+    );
+  }
+
+  Widget image2(){
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      child: GestureDetector(
+        onTap: _showSelectionDialog,
+        child: Container(
+          width: screenWidth,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: _imageList.length > 1
+                  ? FileImage(_imageList[1]) as ImageProvider
+                  : AssetImage(pathAsset),
+                fit: BoxFit.contain,
+                ),
+              )
+        ),
+      ),
+    );
+  }
+
+  Widget image3(){
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      child: GestureDetector(
+        onTap: _showSelectionDialog,
+        child: Container(
+          width: screenWidth,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: _imageList.length > 2
+                  ? FileImage(_imageList[2]) as ImageProvider
+                  : AssetImage(pathAsset),
+                fit: BoxFit.contain,
+                ),
+              )
+        ),
+      ),
+    );
+  }
   
   void _determinePosition() async {
     bool serviceEnabled;
