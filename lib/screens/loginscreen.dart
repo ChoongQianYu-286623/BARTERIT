@@ -170,6 +170,37 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 8,
                         ),
                         GestureDetector(
+                          onTap: (){
+                          //   Navigator.pushReplacement(
+                          // context, 
+                          //   MaterialPageRoute(
+                          //   builder: (content) =>  MainScreen(
+                          //   user: widget.user,)));
+                            },
+                          child:  RichText(
+                            text: const TextSpan(
+                               children: <TextSpan>[
+                                TextSpan(
+                                  text: "Login as  ",
+                                  style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black
+                                  )
+                                ),
+                              TextSpan(
+                                  text: "Guest",
+                                  style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 12,
+                                  color: Color.fromRGBO(183, 4, 4, 80)
+                                  )
+                                ),
+                          ])),
+                        ),
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        GestureDetector(
                           onTap: _forgotDialog,
                           child: const Text("Forgot Password?",
                           style: TextStyle(fontSize: 14),),
