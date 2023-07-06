@@ -7,11 +7,18 @@ environment:
   sdk: '>=2.19.6 <3.0.0'
 
 dependencies:
+  cached_network_image: ^3.2.3
   flutter:
     sdk: flutter
   flutter_animate: ^4.1.1+1
+  geocoding: ^2.1.0
+  geolocator: ^9.0.2
   google_fonts: ^4.0.4
   http: ^0.13.6
+  image_cropper: ^4.0.1
+  image_picker: ^0.8.8
+  intl: ^0.18.1
+  multiple_images_picker: ^1.0.1
   shared_preferences: ^2.1.1
 
 dev_dependencies:
